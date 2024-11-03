@@ -11,7 +11,8 @@ export interface Piece {
   position: { row: number; col: number };
   findNextValidPositions: (
     currentLocation: Position,
-    color: "white" | "black"
+    color: "white" | "black",
+    board: Square[][]
   ) => Position[];
   move: (targetPosition: Position, board: Square[][]) => void;
 }

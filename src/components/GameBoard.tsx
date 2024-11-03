@@ -6,13 +6,10 @@ import { Square } from "../utilities/types/square";
 function getInitialPiece(row: number, col: number): Piece | null {
   const pieces: { [key: number]: string } = {
     0: "rook",
-    1: "knight",
-    2: "bishop",
-    3: "queen",
-    4: "king",
-    5: "bishop",
-    6: "knight",
-    7: "rook",
+    1: "bishop",
+    2: "queen",
+    3: "king",
+    4: "knight",
   };
 
   if (row === 1) return { type: "pawn", color: "black" };
