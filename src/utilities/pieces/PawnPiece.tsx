@@ -34,14 +34,14 @@ export const findNextValidPositionsForPawn = (
 
   if (leftCapture.row >= 0 && leftCapture.row < board.length) {
     const leftSquare = board[leftCapture.row][leftCapture.col];
-    if (leftSquare.piece && leftSquare.piece.color !== color) {
+    if (leftSquare?.piece && leftSquare?.piece.color !== color) {
       validMoves.push(leftCapture); // Valid capture
     }
   }
 
   if (rightCapture.row >= 0 && rightCapture.row < board.length) {
     const rightSquare = board[rightCapture.row][rightCapture.col];
-    if (rightSquare.piece && rightSquare.piece.color !== color) {
+    if (rightSquare?.piece && rightSquare?.piece.color !== color) {
       validMoves.push(rightCapture); // Valid capture
     }
   }
@@ -58,8 +58,8 @@ export const findNextValidPositionsForPawn = (
     col: currentLocation.col + 1,
   };
 
-// Check for left en passant move
-if (
+  // Check for left en passant move
+  if (
     enPassantLeft.col >= 0 &&
     enPassantLeft.col < board[0].length &&
     board[enPassantRow][enPassantLeft.col] !== null && // Ensure not null
@@ -71,7 +71,7 @@ if (
   ) {
     validMoves.push({ row: enPassantRow, col: enPassantLeft.col }); // Valid en passant move
   }
-  
+
   // Check for right en passant move
   if (
     enPassantRight.col < board[0].length &&

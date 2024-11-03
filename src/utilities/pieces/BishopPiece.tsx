@@ -2,7 +2,7 @@ import { move } from "../moves";
 import { Bishop, Position } from "../types/pieces";
 import { Square } from "../types/square";
 
-const findNextValidPositionsForBishop = (
+export const findNextValidPositionsForBishop = (
   currentLocation: Position,
   color: "white" | "black",
   board: Square[][]
@@ -60,5 +60,5 @@ export const createBishop = (
   materialValue: 3,
   findNextValidPositions: findNextValidPositionsForBishop,
   position,
-  move: move,
+  move,
 });
