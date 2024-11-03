@@ -1,6 +1,8 @@
-import { findNextValidPositionsForKing } from "../moves";
+import { Square } from "./square";
 
 type PieceType = "pawn" | "king" | "queen" | "bishop" | "rook" | "knight";
+
+export type Position = { row: number; col: number };
 
 export interface Piece {
   type: PieceType;
@@ -8,39 +10,32 @@ export interface Piece {
   materialValue: number;
   position: { row: number; col: number };
   findNextValidPositions: (
-    currentLocation: { row: number; col: number },
+    currentLocation: Position,
     color: "white" | "black"
-  ) => { row: number; col: number }[];
-  move: () => void;
+  ) => Position[];
+  move: (targetPosition: Position, board: Square[][]) => void;
 }
 
 export interface Pawn extends Piece {
   type: "pawn";
-  move: () => void;
 }
 
 export interface King extends Piece {
   type: "king";
-  findNextValidPostions: findNextValidPositionsForKing;
-  move: () => void;
 }
 
 export interface Queen extends Piece {
   type: "queen";
-  move: () => void;
 }
 
 export interface Bishop extends Piece {
   type: "bishop";
-  move: () => void;
 }
 
 export interface Knight extends Piece {
   type: "knight";
-  move: () => void;
 }
 
 export interface Rook extends Piece {
   type: "rook";
-  move: () => void;
 }
