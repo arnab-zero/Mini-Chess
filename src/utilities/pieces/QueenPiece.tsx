@@ -1,10 +1,10 @@
-import { Position } from "./types/pieces";
-import { Square } from "./types/square";
-
-export const move = () => {};
+import { move } from "../moves";
+import { Position, Queen } from "../types/pieces";
+import { Square } from "../types/square";
 
 export const findNextValidPositionsForQueen = (
-  currentPosition: Position,
+  currentLocation: Position,
+  color: "white" | "black",
   board: Square[][]
 ): Position[] => {
   const validPositions: Position[] = [];
@@ -26,8 +26,8 @@ export const findNextValidPositionsForQueen = (
     row >= 0 && row < boardSize && col >= 0 && col < boardSize;
 
   for (const direction of directions) {
-    let newRow = currentPosition.row + direction.row;
-    let newCol = currentPosition.col + direction.col;
+    let newRow = currentLocation.row + direction.row;
+    let newCol = currentLocation.col + direction.col;
 
     // Continue in the current direction until we hit the edge or a piece
     while (isInBounds(newRow, newCol)) {
@@ -36,7 +36,7 @@ export const findNextValidPositionsForQueen = (
       if (targetSquare.hasPiece) {
         if (
           targetSquare.hasPiece.color !==
-          board[currentPosition.row][currentPosition.col].hasPiece?.color
+          board[currentLocation.row][currentLocation.col].hasPiece?.color
         ) {
           // If it's an opponent's piece, add it as a valid position (capture move)
           validPositions.push({ row: newRow, col: newCol });
@@ -56,3 +56,15 @@ export const findNextValidPositionsForQueen = (
 
   return validPositions;
 };
+
+export const createQueen = (
+  color: "white" | "black",
+  position: Position
+): Queen => ({
+  type: "queen",
+  color,
+  materialValue: 1000,
+  findNextValidPositions: findNextValidPositionsForQueen,
+  position,
+  move: move,
+});
