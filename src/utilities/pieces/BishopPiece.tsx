@@ -29,8 +29,8 @@ const findNextValidPositionsForBishop = (
     while (isInBounds(newRow, newCol)) {
       const targetSquare = board[newRow][newCol];
 
-      if (targetSquare.hasPiece) {
-        if (targetSquare.hasPiece.color !== color) {
+      if (targetSquare.piece) {
+        if (targetSquare.piece.color !== color) {
           // Capture opponent's piece
           validPositions.push({ row: newRow, col: newCol });
         }

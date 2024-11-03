@@ -17,7 +17,7 @@ export const findNextValidPositionsForPawn = (
   };
   if (forwardMove.row >= 0 && forwardMove.row < board.length) {
     // Only add if the square is empty
-    if (!board[forwardMove.row][forwardMove.col].hasPiece) {
+    if (!board[forwardMove.row][forwardMove.col].piece) {
       validMoves.push(forwardMove);
     }
   }
@@ -34,14 +34,14 @@ export const findNextValidPositionsForPawn = (
 
   if (leftCapture.row >= 0 && leftCapture.row < board.length) {
     const leftSquare = board[leftCapture.row][leftCapture.col];
-    if (leftSquare.hasPiece && leftSquare.hasPiece.color !== color) {
+    if (leftSquare.piece && leftSquare.piece.color !== color) {
       validMoves.push(leftCapture); // Valid capture
     }
   }
 
   if (rightCapture.row >= 0 && rightCapture.row < board.length) {
     const rightSquare = board[rightCapture.row][rightCapture.col];
-    if (rightSquare.hasPiece && rightSquare.hasPiece.color !== color) {
+    if (rightSquare.piece && rightSquare.piece.color !== color) {
       validMoves.push(rightCapture); // Valid capture
     }
   }
@@ -57,16 +57,16 @@ export const findNextValidPositionsForPawn = (
     row: enPassantRow,
     col: currentLocation.col + 1,
   };
-  
+
 // Check for left en passant move
 if (
     enPassantLeft.col >= 0 &&
     enPassantLeft.col < board[0].length &&
     board[enPassantRow][enPassantLeft.col] !== null && // Ensure not null
-    board[enPassantRow][enPassantLeft.col].hasPiece !== null && // Ensure hasPiece is not null
-    board[enPassantRow][enPassantLeft.col].hasPiece.color !== color &&
-    board[enPassantRow][enPassantLeft.col].hasPiece.type === "pawn" &&
-    board[enPassantRow][enPassantLeft.col].hasPiece.position.row ===
+    board[enPassantRow][enPassantLeft.col].piece !== null && // Ensure piece is not null
+    board[enPassantRow][enPassantLeft.col].piece.color !== color &&
+    board[enPassantRow][enPassantLeft.col].piece.type === "pawn" &&
+    board[enPassantRow][enPassantLeft.col].piece.position.row ===
       (color === "white" ? 3 : 4)
   ) {
     validMoves.push({ row: enPassantRow, col: enPassantLeft.col }); // Valid en passant move
@@ -76,10 +76,10 @@ if (
   if (
     enPassantRight.col < board[0].length &&
     board[enPassantRow][enPassantRight.col] !== null && // Ensure not null
-    board[enPassantRow][enPassantRight.col].hasPiece !== null && // Ensure hasPiece is not null
-    board[enPassantRow][enPassantRight.col].hasPiece.color !== color &&
-    board[enPassantRow][enPassantRight.col].hasPiece.type === "pawn" &&
-    board[enPassantRow][enPassantRight.col].hasPiece.position.row ===
+    board[enPassantRow][enPassantRight.col].piece !== null && // Ensure piece is not null
+    board[enPassantRow][enPassantRight.col].piece.color !== color &&
+    board[enPassantRow][enPassantRight.col].piece.type === "pawn" &&
+    board[enPassantRow][enPassantRight.col].piece.position.row ===
       (color === "white" ? 3 : 4)
   ) {
     validMoves.push({ row: enPassantRow, col: enPassantRight.col }); // Valid en passant move
