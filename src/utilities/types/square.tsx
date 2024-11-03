@@ -7,6 +7,6 @@ interface Position {
 
 export interface Square {
   position: Position;
-  square_color: "black" | "white";
-  hasPiece: Piece | null;
+  color: "black" | "white";
+  piece: Piece | null;
 }

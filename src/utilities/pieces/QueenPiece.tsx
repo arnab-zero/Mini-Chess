@@ -33,10 +33,10 @@ export const findNextValidPositionsForQueen = (
     while (isInBounds(newRow, newCol)) {
       const targetSquare = board[newRow][newCol];
 
-      if (targetSquare.hasPiece) {
+      if (targetSquare.piece) {
         if (
-          targetSquare.hasPiece.color !==
-          board[currentLocation.row][currentLocation.col].hasPiece?.color
+          targetSquare.piece.color !==
+          board[currentLocation.row][currentLocation.col].piece?.color
         ) {
           // If it's an opponent's piece, add it as a valid position (capture move)
           validPositions.push({ row: newRow, col: newCol });

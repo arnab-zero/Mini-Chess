@@ -1,28 +1,50 @@
 import React from "react";
 import { Piece } from "../utilities/types/pieces";
 import { Square } from "../utilities/types/square";
+import { createPawn } from "../utilities/pieces/PawnPiece";
+import { createRook } from "../utilities/pieces/RookPiece";
+import { createKnight } from "../utilities/pieces/KnightPiece";
+import { createBishop } from "../utilities/pieces/BishopPiece";
+import { createQueen } from "../utilities/pieces/QueenPiece";
+import { createKing } from "../utilities/pieces/KingPiece";
 
 // Helper function to place initial pieces on the board
 function getInitialPiece(row: number, col: number): Piece | null {
-  const pieces: { [key: number]: string } = {
-    0: "rook",
-    1: "bishop",
-    2: "queen",
-    3: "king",
-    4: "knight",
+  const color = row < 3 ? "black" : "white"; // Determine piece color based on row
+  const createPiece = (type: string) => {
+    switch (type) {
+      case "pawn":
+        return createPawn(color, { row, col });
+      case "rook":
+        return createRook(color, { row, col });
+      case "knight":
+        return createKnight(color, { row, col });
+      case "bishop":
+        return createBishop(color, { row, col });
+      case "queen":
+        return createQueen(color, { row, col });
+      case "king":
+        return createKing(color, { row, col });
+      default:
+        return null;
+    }
   };
 
-  if (row === 1) return { type: "pawn", color: "black" };
-  if (row === 4) return { type: "pawn", color: "white" };
-  if (row === 0) return { type: pieces[col], color: "black" };
-  if (row === 5) return { type: pieces[col], color: "white" };
-  return null;
+  if (row === 1) return createPiece("pawn");
+  if (row === 4) return createPiece("pawn");
+  if (row === 0)
+    return createPiece(["rook", "bishop", "queen", "king", "knight"][col]);
+  if (row === 5)
+    return createPiece(["rook", "bishop", "queen", "king", "knight"][col]);
+
+  return null; // If no piece is initialized
 }
 
 const initialBoard: Square[][] = Array.from({ length: 6 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => {
     const isBlack = (row + col) % 2 === 1;
     return {
+      position: { row, col },
       piece: getInitialPiece(row, col),
       color: isBlack ? "black" : "white",
     };
@@ -53,11 +75,7 @@ const ChessBoard: React.FC = () => {
               square.color === "black" ? "bg-[#8e6425]" : "bg-[#d0ba97]"
             } cursor-pointer`}
             onClick={() => {
-              if (square.piece) {
-                console.log(
-                  `Position: ${rowIndex}:${colIndex} --> ${square.piece}`
-                );
-              }
+              console.log(`Square Object:`, square);
             }}
           >
             {square.piece ? renderPiece(square.piece) : null}

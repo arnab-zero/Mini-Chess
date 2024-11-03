@@ -28,9 +28,9 @@ export const findNextValidPositionsForKnight = (
 
     // Check if the square is either empty or occupied by an opponent's piece
     const targetSquare = board[move.row][move.col];
-    const isTargetEmpty = !targetSquare.hasPiece;
+    const isTargetEmpty = !targetSquare.piece;
     const isOpponentPiece =
-      targetSquare.hasPiece && targetSquare.hasPiece.color !== color;
+      targetSquare.piece && targetSquare.piece.color !== color;
 
     return isWithinBounds && (isTargetEmpty || isOpponentPiece);
   });
