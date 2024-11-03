@@ -1,6 +1,12 @@
 import { Piece } from "./pieces";
 
-export type Square = {
-  piece: Piece | null;
-  color: "white" | "black";
-};
+interface Position {
+  row: number;
+  col: number;
+}
+
+export interface Square {
+  position: Position;
+  square_color: "black" | "white";
+  hasPiece: Piece | null;
+}
