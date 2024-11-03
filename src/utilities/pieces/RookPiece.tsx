@@ -1,4 +1,3 @@
-import { move } from "../moves";
 import { Position, Rook } from "../types/pieces";
 import { Square } from "../types/square";
 
@@ -59,5 +58,4 @@ export const createRook = (
   materialValue: 5,
   position,
   findNextValidPositions: findNextValidPositionsForRook,
-  move,
 });

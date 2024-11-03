@@ -14,7 +14,6 @@ export interface Piece {
     color: "white" | "black",
     board: Square[][]
   ) => Position[];
-  move: (targetPosition: Position, board: Square[][]) => void;
 }
 
 export interface Pawn extends Piece {

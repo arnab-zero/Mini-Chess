@@ -1,4 +1,3 @@
-import { move } from "../moves";
 import { King, Position } from "../types/pieces";
 import { Square } from "../types/square";
 
@@ -35,7 +34,6 @@ export const createKing = (
   materialValue: 1000,
   findNextValidPositions: findNextValidPositionsForKing,
   position,
-  move: move,
 });
 
 

@@ -107,5 +107,4 @@ export const createPawn = (
   materialValue: 1,
   position,
   findNextValidPositions: findNextValidPositionsForPawn,
-  move,
 });
