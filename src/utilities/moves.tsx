@@ -1,7 +1,21 @@
 import { Position } from "./types/pieces";
 import { Square } from "./types/square";
 
-export const move = () => {};
+export const move = (
+  board: Square[][],
+  currentPosition: Position,
+  newPosition: Position
+): Square[][] => {
+  const updatedBoard = board.map(row => [...row]); // Deep copy each row to avoid mutation issues
+
+  // Move the piece to the new position
+  const piece = updatedBoard[currentPosition.row][currentPosition.col].piece;
+  updatedBoard[newPosition.row][newPosition.col].piece = piece;
+  updatedBoard[currentPosition.row][currentPosition.col].piece = null;
+
+  return updatedBoard;
+};
+
 
 export const findNextValidPositionsForQueen = (
   currentPosition: Position,
