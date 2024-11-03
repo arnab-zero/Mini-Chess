@@ -1,4 +1,3 @@
-import { move } from "../moves";
 import { Bishop, Position } from "../types/pieces";
 import { Square } from "../types/square";
 
@@ -60,5 +59,4 @@ export const createBishop = (
   materialValue: 3,
   findNextValidPositions: findNextValidPositionsForBishop,
   position,
-  move,
 });

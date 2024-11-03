@@ -1,4 +1,3 @@
-import { move } from "../moves";
 import { Knight, Position } from "../types/pieces";
 import { Square } from "../types/square";
 
@@ -42,6 +41,5 @@ export const createKnight = (
   color,
   materialValue: 3.2,
   findNextValidPositions: findNextValidPositionsForKnight,
-  position, // Default position, should be updated when placed on the board
-  move: move,
+  position, 
 });
