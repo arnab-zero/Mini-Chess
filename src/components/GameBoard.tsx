@@ -1,5 +1,5 @@
-import React from "react";
-import { Piece } from "../utilities/types/pieces";
+import React, { useState } from "react";
+import { Piece, Position } from "../utilities/types/pieces";
 import { Square } from "../utilities/types/square";
 import { createPawn } from "../utilities/pieces/PawnPiece";
 import { createRook } from "../utilities/pieces/RookPiece";
@@ -40,7 +40,7 @@ function getInitialPiece(row: number, col: number): Piece | null {
   return null; // If no piece is initialized
 }
 
-const initialBoard: Square[][] = Array.from({ length: 6 }, (_, row) =>
+const boardCurrentState: Square[][] = Array.from({ length: 6 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => {
     const isBlack = (row + col) % 2 === 1;
     return {
@@ -65,22 +65,45 @@ const renderPiece = (piece: Piece) => {
 };
 
 const ChessBoard: React.FC = () => {
+  const [validMoves, setValidMoves] = useState<Position[]>([]);
+
+  const handleSquareClick = (square: Square) => {
+    console.log("Piece:", square?.piece);
+    if (square.piece) {
+      const { piece } = square;
+      const validPositions = piece.findNextValidPositions(
+        square.position,
+        piece.color,
+        boardCurrentState
+      );
+      setValidMoves(validPositions); // Update state with valid moves
+    } else {
+      setValidMoves([]); // Clear valid moves if no piece is selected
+    }
+  };
+
   return (
     <div className="grid grid-cols-5 grid-rows-6 border-2 border-black w-[450px] h-[540px]">
-      {initialBoard.map((row, rowIndex) =>
-        row.map((square, colIndex) => (
-          <div
-            key={`${rowIndex}-${colIndex}`}
-            className={`flex items-center justify-center w-full h-full text-2xl font-bold ${
-              square.color === "black" ? "bg-[#8e6425]" : "bg-[#d0ba97]"
-            } cursor-pointer`}
-            onClick={() => {
-              console.log(`Square Object:`, square);
-            }}
-          >
-            {square.piece ? renderPiece(square.piece) : null}
-          </div>
-        ))
+      {boardCurrentState.map((row, rowIndex) =>
+        row.map((square, colIndex) => {
+          const isValidMove = validMoves.some(
+            (move) => move.row === rowIndex && move.col === colIndex
+          );
+
+          return (
+            <div
+              key={`${rowIndex}-${colIndex}`}
+              className={`flex items-center justify-center w-full h-full text-2xl font-bold 
+                ${square.color === "black" ? "bg-[#8e6425]" : "bg-[#d0ba97]"} 
+                ${
+                  isValidMove ? "border-4 border-green-500" : "border"
+                } cursor-pointer`}
+              onClick={() => handleSquareClick(square)}
+            >
+              {square.piece ? renderPiece(square.piece) : null}
+            </div>
+          );
+        })
       )}
     </div>
   );
