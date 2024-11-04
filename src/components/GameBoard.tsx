@@ -8,6 +8,9 @@ const ChessBoard: React.FC = () => {
   const [boardState, setBoardState] = useState<Square[][]>(initialBoardState);
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
+    "white"
+  );
 
   const handleSquareClick = (square: Square) => {
     if (
@@ -22,12 +25,13 @@ const ChessBoard: React.FC = () => {
       setBoardState(updatedBoard); // Update board state
       setSelectedSquare(null); // Deselect the square
       setValidMoves([]); // Clear valid moves
+      setCurrentPlayer(currentPlayer === "white" ? "black" : "white"); // Toggle turn
     } else if (square.piece === selectedSquare?.piece) {
-      // if the same square is clicked again
+      // If the same square is clicked again, deselect it
       setSelectedSquare(null);
       setValidMoves([]);
-    } else if (square.piece) {
-      // If selecting a piece, show valid moves
+    } else if (square.piece && square.piece.color === currentPlayer) {
+      // Allow selection only if the piece matches the current player's turn
       const validPositions = square.piece.findNextValidPositions(
         square.position,
         square.piece.color,
@@ -36,7 +40,7 @@ const ChessBoard: React.FC = () => {
       setSelectedSquare(square);
       setValidMoves(validPositions);
     } else {
-      // Clear selection if clicking an invalid square
+      // Clear selection if clicking an invalid square or wrong piece
       setSelectedSquare(null);
       setValidMoves([]);
     }
