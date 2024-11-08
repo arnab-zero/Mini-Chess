@@ -39,3 +39,27 @@ def drawPieces(screen, board):
 
                 screen.blit(images[piece], p.Rect(piece_x, piece_y, pawnWidht, pawnHeight))
 
+def drawBoard(screen):
+    global colors
+    colors = [p.Color("#EBECD0"), p.Color("#779556")]
+    for r in range(yDimension):
+        for c in range(xDimension):
+            color = colors[((r + c) % 2)]
+            p.draw.rect(screen, color, p.Rect(file + c * squareSize, rank + r * squareSize, squareSize, squareSize))
+
+
+def highlightSquares(screen, gameState, validMoves, sqSelected):
+    if sqSelected != ():
+        r, c = sqSelected
+        if gameState.board[r][c][0] == ('w' if gameState.whiteToMove else 'b'):
+            s = p.Surface((squareSize, squareSize))
+            s.set_alpha(100)
+            s.fill(p.Color('blue'))
+            screen.blit(s, (c * squareSize + file, r * squareSize + rank))
+            s.fill(p.Color('yellow'))
+            for move in validMoves:
+                if move.startRow == r and move.startCol == c:
+                    screen.blit(s, (squareSize * move.endCol + rank, squareSize * move.endRow + rank))
+    pass
+
+
