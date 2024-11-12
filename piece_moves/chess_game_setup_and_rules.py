@@ -173,3 +173,49 @@ class GameState:
                 # not an ally (empty or enemy piece)
                 if destination[0] != allyColor:
                     moves.append(Move((r, c), (destRow, destCol), self.board))
+
+    def getBishopMoves(self, r, c, moves):
+        directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))  # all 4 diagonals
+        enemyColor = 'b' if self.whiteToMove else 'w'
+
+        for dr, dc in directions:
+            for i in range(1, 5):  # a bishop can move maximum 4 diagonal squares
+                destRow, destCol = r + dr * i, c + dc * i
+
+                if is_valid_square(destRow, destCol):  # check on board
+                    destination = self.board[destRow, destCol]
+                    if destination == '--':  # empty space so valid
+                        moves.append(Move((r, c), (destRow, destCol), self.board))
+                    elif destination[0] == enemyColor:
+                        moves.append(Move((r, c), (destRow, destCol), self.board))
+                        break
+                    else:
+                        break
+                else:
+                    break
+
+    def getQueenMoves(self, r, c, moves):
+        self.getRookMoves(r, c, moves)
+        self.getBishopMoves(r, c, moves)
+
+    def getKnightMoves(self, r, c, moves):
+        knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
+        allyColor = 'w' if self.whiteToMove else 'b'
+
+        for dir in knightMoves:
+            destRow, destCol = r + dir[0], c + dir[1]
+            if is_valid_square(destRow, destCol):  # check if the destination is on the board
+                destination = self.board[destRow, destCol]
+                if destination[0] != allyColor:
+                    moves.append(Move((r, c), (destRow, destCol), self.board))
+
+    def getKingMoves(self, r, c, moves):
+        kingMoves = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+        allyColor = 'w' if self.whiteToMove else 'b'
+        for i in range(len(kingMoves)):
+            destRow, destCol = r + kingMoves[i][0], c + kingMoves[i][1]
+            if is_valid_square(destRow, destCol):  # check on board
+                destination = self.board[destRow, destCol]
+                # not an ally (empty or enemy piece)
+                if destination[0] != allyColor:
+                    moves.append(Move((r, c), (destRow, destCol), self.board))
