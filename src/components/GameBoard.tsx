@@ -1,96 +1,165 @@
 import React, { useState } from "react";
-import { Position } from "../utilities/types/pieces";
-import { Square } from "../utilities/types/square";
-import { move } from "../utilities/moves";
-import {
-  initialBoardState,
-  renderPiece,
-  updateAttackedSquares,
-} from "../utilities/gameBoardSetup";
+import { initialBoard, initiallyCanMoveTo } from "../utilities/board/InitialPosition";
+import { pieceStateUpdate } from "../utilities/board/boardUpdate";
+import { Piece } from "../utilities/types/pieces";
+import MinMax from "../utilities/ai/minmax";
+import Square from "./Square";
 
-const ChessBoard: React.FC = () => {
-  const [boardState, setBoardState] = useState<Square[][]>(initialBoardState);
-  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
-  const [validMoves, setValidMoves] = useState<Position[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
-    "white"
-  );
+pieceStateUpdate(initialBoard, "W");
 
-  const handleSquareClick = (square: Square) => {
+const Board: React.FC = () => {
+  const [board, setBoard] = useState(() => initialBoard);
+  const [previousClick, setPreviousClick] = useState([4, 4]);
+  const [turn, setTurn] = useState("W");
+  const [canMoveToHighlighted, setCanMoveToHighlighted] = useState(() => [
+    ...initiallyCanMoveTo,
+  ]);
+  const clickNothing = () => {
+    setCanMoveToHighlighted(initiallyCanMoveTo.map((inner) => inner.slice()));
+    setPreviousClick([9, 9]);
+  };
+
+  const movePiece = (
+    previousBoard: (Piece | null)[][],
+    i: number,
+    k: number
+  ) => {
+    // Create a copy of the previous board
+    const newBoard = previousBoard.map((inner) => inner.slice());
+    if (newBoard[i][k] && newBoard[i][k].type === "King") {
+      // Game over here
+      alert("Game over");
+    }
+
+    // Check for Castling:
     if (
-      selectedSquare &&
-      validMoves.some(
-        (move) =>
-          move.row === square.position.row && move.col === square.position.col
-      )
+      k === 6 &&
+      (i === 0 || i === 7) &&
+      previousClick[1] === 4 &&
+      (previousClick[0] === 0 || previousClick[0] === 7) &&
+      previousBoard[previousClick[0]][previousClick[1]].type === "King"
     ) {
-      // If clicking on a valid move, execute the move
-      let updatedBoard = move(selectedSquare, square, boardState); // Call move function
-      updatedBoard = updateAttackedSquares(updatedBoard); // Update attacked squares with opponent's color
+      newBoard[i][k - 1] = previousBoard[previousClick[0]][7];
+      newBoard[i][7] = null;
+      newBoard[i][k - 1].numOfMoves++;
+    }
 
-      setBoardState(updatedBoard); // Update board state
-      setSelectedSquare(null); // Deselect the square
-      setValidMoves([]); // Clear valid moves
-      setCurrentPlayer(currentPlayer === "white" ? "black" : "white"); // Toggle turn
-    } else if (square.piece === selectedSquare?.piece) {
-      // If the same square is clicked again, deselect it
-      setSelectedSquare(null);
-      setValidMoves([]);
-    } else if (square.piece && square.piece.color === currentPlayer) {
-      // Allow selection only if the piece matches the current player's turn
-      const validPositions = square.piece.findNextValidPositions(
-        square.position,
-        square.piece.color,
-        boardState
+    // Check for En Passant:
+    if (
+      (i === 2 &&
+        previousBoard[i + 1][k] &&
+        previousBoard[i + 1][k].type === "Pawn" &&
+        previousBoard[previousClick[0]][previousClick[1]].type === "Pawn") ||
+      (i === 5 &&
+        previousBoard[i - 1][k] &&
+        previousBoard[i - 1][k].type === "Pawn" &&
+        previousBoard[previousClick[0]][previousClick[1]].type === "Pawn")
+    )
+      newBoard[i === 2 ? 3 : 4][k] = null;
+
+    // Pawn Promotion
+    if (
+      (i === 0 &&
+        previousBoard[1][k] &&
+        previousBoard[1][k].color === "W" &&
+        previousBoard[1][k].type === "Pawn") ||
+      (i === 7 &&
+        previousBoard[6][k] &&
+        previousBoard[6][k].color === "B" &&
+        previousBoard[6][k].type === "Pawn")
+    )
+      previousBoard[i === 0 ? 1 : 6][k].type = "Queen";
+
+    newBoard[i][k] = previousBoard[previousClick[0]][previousClick[1]];
+    newBoard[previousClick[0]][previousClick[1]] = null;
+    newBoard[i][k].numOfMoves++;
+    newBoard[i][k].turnsSinceLastMove = 0;
+
+    // (piecesGivingCheck = [[i, k,], [i, k]]) piece locations that can directly kill the King in the next turn
+    // pieceStateUpdate(newBoard, turn);
+    return newBoard;
+  };
+
+  const handleClick = (i: number, k: number) => {
+    // If it's W's turn and they click B's Piece
+    if (
+      board[i][k] &&
+      turn !== board[i][k].color &&
+      !canMoveToHighlighted[i][k]
+    )
+      return;
+
+    // If clicking on the same box that the user previously clicked
+    if (i === previousClick[0] && k === previousClick[1]) return;
+
+    // If the Piece that the user previously clicked on can move to [i, k]
+    if (canMoveToHighlighted[i][k] == true) {
+      const newBoard = movePiece(board, i, k);
+      setBoard(newBoard);
+      setCanMoveToHighlighted(initiallyCanMoveTo.map((inner) => inner.slice()));
+
+      const { score: scoreToSend, moveToMake } = MinMax(
+        newBoard,
+        "B",
+        2,
+        -100000,
+        100000
       );
-      setSelectedSquare(square);
-      setValidMoves(validPositions);
+      if (scoreToSend === 100000) {
+        alert("CheckMate! You defeated the AI :)");
+        return;
+      }
+      setBoard((previousBoard) => {
+        const newBoard = previousBoard.map((inner) => inner.slice());
+        newBoard[moveToMake.x][moveToMake.y] =
+          newBoard[moveToMake.i][moveToMake.j];
+        newBoard[moveToMake.i][moveToMake.j] = null;
+        newBoard[moveToMake.x][moveToMake.y].numOfMoves++;
+        pieceStateUpdate(newBoard, "W");
+        setCanMoveToHighlighted((previousCanMoveTo) => {
+          const toReturn = initiallyCanMoveTo.map((inner) => inner.slice());
+          toReturn[moveToMake.x][moveToMake.y] = true;
+          toReturn[moveToMake.i][moveToMake.j] = true;
+          setPreviousClick([moveToMake.x, moveToMake.y]);
+          return toReturn;
+        });
+        return newBoard;
+      });
+      setTurn("W");
     } else {
-      // Clear selection if clicking an invalid square or wrong piece
-      setSelectedSquare(null);
-      setValidMoves([]);
+      setCanMoveToHighlighted((canMoveTo) => {
+        const newCanMoveTo = board[i][k].canMoveTo.map((inner: any): boolean[] =>
+          inner.slice()
+        );
+        newCanMoveTo[i][k] = true;
+        return newCanMoveTo;
+      });
+
+      setPreviousClick([i, k]);
     }
   };
 
   return (
-    <div className="mb-10">
-      <h1 className="text-3xl font-semibold mb-4">
-        Next move: {currentPlayer === "white" ? "White" : "Black"}
-      </h1>
-      <div className="grid grid-cols-5 grid-rows-6 border-2 border-black w-[450px] h-[540px]">
-        {boardState.map((row, rowIndex) =>
-          row.map((square, colIndex) => {
-            const isValidMove = validMoves.some(
-              (move) => move.row === rowIndex && move.col === colIndex
-            );
-
-            // Determine if the square has an opponent's piece
-            const hasOpponentPiece =
-              square.piece && square.piece.color !== currentPlayer;
-
-            return (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`flex items-center justify-center w-full h-full text-2xl font-bold 
-              ${square.color === "black" ? "bg-[#8e6425]" : "bg-[#d0ba97]"} 
-              ${
-                isValidMove
-                  ? hasOpponentPiece
-                    ? "border-4 border-red-500"
-                    : "border-4 border-green-500"
-                  : "border"
-              }
-              cursor-pointer`}
-                onClick={() => handleSquareClick(square)}
-              >
-                {square.piece ? renderPiece(square.piece) : null}
-              </div>
-            );
-          })
-        )}
-      </div>
+    <div>
+      <section className="app_board" style={{ margin: "auto" }}>
+        {board.map((rows: Piece[][] | any, i: number) => (
+          <span className="row">
+            {rows.map((col: Piece[], k: number) => (
+              <Square
+                clickNothing={clickNothing}
+                k={k}
+                i={i}
+                key={`${i}_${k}`}
+                piece={board[i][k]}
+                handleClick={handleClick}
+                active={canMoveToHighlighted[i][k]}
+              />
+            ))}
+          </span>
+        ))}
+      </section>
     </div>
   );
 };
 
-export default ChessBoard;
+export default Board;

@@ -91,10 +91,9 @@ export const Pawn = (
         const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 1][j + 1] = Board[i][j];
         newBoard[i][j + 1] = null;
-        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
           canMoveTo[i - 1][j + 1] = true;
-          importance += valueOfPiece(right.type);
-        }
+        importance += valueOfPiece(right.type);
       }
     }
   }
@@ -188,66 +187,46 @@ export const Pawn = (
 export const PawnGivesCheck = (
   i: number,
   j: number,
-  Board: (Piece | null)[][],
-  turn: string
+  board: (Piece | null)[][]
 ): boolean => {
-  const boardRows = 6;
-  const boardCols = 5;
+  if (i === 0 || i === 5) return false;
 
-  // Check if the position is within board boundaries for a 6x5 board
-  if (i < 0 || i >= boardRows || j < 0 || j >= boardCols) return false;
+  const piece = board[i][j];
+  if (piece) {
+    const color = piece.color;
+    const targetColor = color === "W" ? "B" : "W";
+    let directions = [];
 
-  if (Board[i][j].color === "W") {
-    // White pawn checking for a Black king
-    if (i > 0) {
-      if (j > 0) {
-        const upLeft = Board[i - 1][j - 1];
-        if (upLeft !== null && upLeft.color === "B" && upLeft.type === "King") {
-          if (turn === "W") Board[i][j].importance += 100;
-          return true;
-        }
-      }
-      if (j < boardCols - 1) {
-        const upRight = Board[i - 1][j + 1];
+    // Determine possible check directions based on the piece's color
+    if (color === "W") {
+      directions = [
+        [-1, -1],
+        [-1, 1],
+      ]; // Capture diagonally up for White
+    } else {
+      directions = [
+        [1, -1],
+        [1, 1],
+      ]; // Capture diagonally down for Black
+    }
+
+    // Check diagonals for opponent's king
+    for (const [dx, dy] of directions) {
+      const newRow = i + dx;
+      const newCol = j + dy;
+
+      if (newRow >= 0 && newRow <= 5 && newCol >= 0 && newCol <= 4) {
+        const targetPiece = board[newRow][newCol];
         if (
-          upRight !== null &&
-          upRight.color === "B" &&
-          upRight.type === "King"
+          targetPiece &&
+          targetPiece.type === "K" &&
+          targetPiece.color === targetColor
         ) {
-          if (turn === "W") Board[i][j].importance += 100;
-          return true;
+          return true; // The pawn gives check
         }
       }
     }
   }
 
-  if (Board[i][j].color === "B") {
-    // Black pawn checking for a White king
-    if (i < boardRows - 1) {
-      if (j > 0) {
-        const downLeft = Board[i + 1][j - 1];
-        if (
-          downLeft !== null &&
-          downLeft.color === "W" &&
-          downLeft.type === "King"
-        ) {
-          if (turn === "B") Board[i][j].importance += 100;
-          return true;
-        }
-      }
-      if (j < boardCols - 1) {
-        const downRight = Board[i + 1][j + 1];
-        if (
-          downRight !== null &&
-          downRight.color === "W" &&
-          downRight.type === "King"
-        ) {
-          if (turn === "B") Board[i][j].importance += 100;
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  return false; // No check given
 };

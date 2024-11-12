@@ -1,3 +1,7 @@
+import { BishopGivesCheck } from "../pieces/BishopPiece";
+import { KingGivesCheck } from "../pieces/KingPiece";
+import { KnightGivesCheck } from "../pieces/KnightPiece";
+import { PawnGivesCheck } from "../pieces/PawnPiece";
 import { RookGivesCheck } from "../pieces/RookPiece";
 
 
