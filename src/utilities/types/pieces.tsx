@@ -1,3 +1,6 @@
+import { RookGivesCheck } from "../pieces/RookPiece";
+
+
 export class Piece {
   constructor(
     type: "King" | "Rook" | "Knight" | "Bishop" | "Pawn" | "Queen",
@@ -44,4 +47,41 @@ export const valueOfPiece = (
     case "Queen":
       return 500;
   }
+};
+
+export const isUnderCheck = (
+  board: (Piece | null)[][],
+  checkForWhom: string
+) => {
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      if (!board[i][j]) continue;
+      if (board[i][j].color === checkForWhom) {
+        let isGivingCheck: boolean | undefined = false;
+        switch (board[i][j].type) {
+          case "Pawn":
+            isGivingCheck = PawnGivesCheck(i, j, board);
+            break;
+          case "Bishop":
+            isGivingCheck = BishopGivesCheck(i, j, board);
+            break;
+          case "King":
+            isGivingCheck = KingGivesCheck(i, j, board);
+            break;
+          case "Queen":
+            isGivingCheck = BishopGivesCheck(i, j, board);
+            if (!isGivingCheck) isGivingCheck = RookGivesCheck(i, j, board);
+            break;
+          case "Rook":
+            isGivingCheck = RookGivesCheck(i, j, board);
+            break;
+          case "Knight":
+            isGivingCheck = KnightGivesCheck(i, j, board);
+            break;
+        }
+        if (isGivingCheck) return true;
+      }
+    }
+  }
+  return false;
 };

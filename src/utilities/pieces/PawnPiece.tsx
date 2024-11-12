@@ -1,110 +1,253 @@
-import { move } from "../moves";
-import { Piece, Position } from "../types/pieces";
-import { Square } from "../types/square";
+import { isUnderCheck, Piece, valueOfPiece } from "../types/pieces";
 
-export const findNextValidPositionsForPawn = (
-  currentLocation: Position,
-  color: "white" | "black",
-  board: Square[][]
-): Position[] => {
-  const validMoves: Position[] = [];
-  const direction = color === "white" ? -1 : 1; // White moves up, Black moves down
+export const Pawn = (
+  i: number,
+  j: number,
+  canMoveTo: boolean[][],
+  Board: (Piece | null)[][],
+  turn: string
+) => {
+  let importance: number = 50;
+  Board[i][j].turnsSinceLastMove++;
 
-  // Check the move directly ahead
-  const forwardMove: Position = {
-    row: currentLocation.row + direction,
-    col: currentLocation.col,
-  };
-  if (forwardMove.row >= 0 && forwardMove.row < board.length) {
-    // Only add if the square is empty
-    if (!board[forwardMove.row][forwardMove.col].piece) {
-      validMoves.push(forwardMove);
+  // Adjust boundaries for 6x5 board
+  const maxRow = 5;
+  const maxCol = 4;
+
+  if (turn === "W" && i !== 0) {
+    // Move up for White
+    if (Board[i - 1][j] === null) {
+      let newBoard = Board.map((inner) => inner.slice());
+      newBoard[i - 1][j] = Board[i][j];
+      newBoard[i][j] = null;
+      if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+        canMoveTo[i - 1][j] = true;
+
+      // Initial double move for White
+      if (
+        Board[i][j] &&
+        Board[i][j].numOfMoves === 0 &&
+        i - 2 >= 0 &&
+        Board[i - 2][j] === null
+      ) {
+        newBoard = Board.map((inner) => inner.slice());
+        newBoard[i - 2][j] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+          canMoveTo[i - 2][j] = true;
+      }
+    }
+
+    // Capture diagonally left for White
+    if (j > 0) {
+      const upLeft = Board[i - 1][j - 1];
+      const left = Board[i][j - 1];
+      if (upLeft !== null && upLeft.color === "B") {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i - 1][j - 1] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i - 1][j - 1] = true;
+          importance += valueOfPiece(upLeft.type);
+        }
+      }
+      // En Passant for White
+      else if (
+        i === 3 &&
+        left &&
+        left.numOfMoves === 1 &&
+        left.turnsSinceLastMove === 0
+      ) {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i - 1][j - 1] = Board[i][j];
+        newBoard[i][j - 1] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i - 1][j - 1] = true;
+          importance += valueOfPiece(left.type);
+        }
+      }
+    }
+
+    // Capture diagonally right for White
+    if (j < maxCol) {
+      const upRight = Board[i - 1][j + 1];
+      const right = Board[i][j + 1];
+      if (upRight !== null && upRight.color === "B") {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i - 1][j + 1] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i - 1][j + 1] = true;
+          importance += valueOfPiece(upRight.type);
+        }
+      }
+      // En Passant for White
+      else if (
+        i === 3 &&
+        right &&
+        right.numOfMoves === 1 &&
+        right.turnsSinceLastMove === 0
+      ) {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i - 1][j + 1] = Board[i][j];
+        newBoard[i][j + 1] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i - 1][j + 1] = true;
+          importance += valueOfPiece(right.type);
+        }
+      }
     }
   }
 
-  // Check diagonal captures
-  const leftCapture: Position = {
-    row: currentLocation.row + direction,
-    col: currentLocation.col - 1,
-  };
-  const rightCapture: Position = {
-    row: currentLocation.row + direction,
-    col: currentLocation.col + 1,
-  };
+  if (turn === "B" && i !== maxRow) {
+    // Move down for Black
+    if (Board[i + 1][j] === null) {
+      let newBoard = Board.map((inner) => inner.slice());
+      newBoard[i + 1][j] = Board[i][j];
+      newBoard[i][j] = null;
+      if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+        canMoveTo[i + 1][j] = true;
 
-  if (leftCapture.row >= 0 && leftCapture.row < board.length) {
-    const leftSquare = board[leftCapture.row][leftCapture.col];
-    if (leftSquare?.piece && leftSquare?.piece.color !== color) {
-      validMoves.push(leftCapture); // Valid capture
+      // Initial double move for Black
+      if (
+        Board[i][j].numOfMoves === 0 &&
+        i + 2 <= maxRow &&
+        Board[i + 2][j] == null
+      ) {
+        newBoard = Board.map((inner) => inner.slice());
+        newBoard[i + 2][j] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+          canMoveTo[i + 2][j] = true;
+      }
+    }
+
+    // Capture diagonally left for Black
+    if (j > 0) {
+      const upLeft = Board[i + 1][j - 1];
+      const left = Board[i][j - 1];
+      if (upLeft !== null && upLeft.color === "W") {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i + 1][j - 1] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i + 1][j - 1] = true;
+          importance += valueOfPiece(upLeft.type);
+        }
+      }
+      // En Passant for Black
+      else if (
+        i === 2 &&
+        left &&
+        left.numOfMoves === 1 &&
+        left.turnsSinceLastMove === 0
+      ) {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i + 1][j - 1] = Board[i][j];
+        newBoard[i][j - 1] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+          canMoveTo[i + 1][j - 1] = true;
+        importance += valueOfPiece(left.type);
+      }
+    }
+
+    // Capture diagonally right for Black
+    if (j < maxCol) {
+      const upRight = Board[i + 1][j + 1];
+      const right = Board[i][j + 1];
+      if (upRight !== null && upRight.color === "W") {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i + 1][j + 1] = Board[i][j];
+        newBoard[i][j] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
+          canMoveTo[i + 1][j + 1] = true;
+          importance += valueOfPiece(upRight.type);
+        }
+      }
+      // En Passant for Black
+      else if (
+        i === 2 &&
+        right &&
+        right.numOfMoves === 1 &&
+        right.turnsSinceLastMove === 0
+      ) {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[i + 1][j + 1] = Board[i][j];
+        newBoard[i][j + 1] = null;
+        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
+          canMoveTo[i + 1][j + 1] = true;
+        importance += valueOfPiece(right.type);
+      }
     }
   }
 
-  if (rightCapture.row >= 0 && rightCapture.row < board.length) {
-    const rightSquare = board[rightCapture.row][rightCapture.col];
-    if (rightSquare?.piece && rightSquare?.piece.color !== color) {
-      validMoves.push(rightCapture); // Valid capture
-    }
-  }
-
-  // En Passant logic
-  const enPassantRow =
-    color === "white" ? currentLocation.row + 1 : currentLocation.row - 1;
-  const enPassantLeft: Position = {
-    row: enPassantRow,
-    col: currentLocation.col - 1,
-  };
-  const enPassantRight: Position = {
-    row: enPassantRow,
-    col: currentLocation.col + 1,
-  };
-
-  // Check for left en passant move
-  if (
-    enPassantLeft.col >= 0 &&
-    enPassantLeft.col < board[0].length &&
-    board[enPassantRow][enPassantLeft.col] !== null && // Ensure not null
-    board[enPassantRow][enPassantLeft.col].piece !== null && // Ensure piece is not null
-    board[enPassantRow][enPassantLeft.col].piece.color !== color &&
-    board[enPassantRow][enPassantLeft.col].piece.type === "pawn" &&
-    board[enPassantRow][enPassantLeft.col].piece.position.row ===
-      (color === "white" ? 3 : 4)
-  ) {
-    validMoves.push({ row: enPassantRow, col: enPassantLeft.col }); // Valid en passant move
-  }
-
-  // Check for right en passant move
-  if (
-    enPassantRight.col < board[0].length &&
-    board[enPassantRow][enPassantRight.col] !== null && // Ensure not null
-    board[enPassantRow][enPassantRight.col].piece !== null && // Ensure piece is not null
-    board[enPassantRow][enPassantRight.col].piece.color !== color &&
-    board[enPassantRow][enPassantRight.col].piece.type === "pawn" &&
-    board[enPassantRow][enPassantRight.col].piece.position.row ===
-      (color === "white" ? 3 : 4)
-  ) {
-    validMoves.push({ row: enPassantRow, col: enPassantRight.col }); // Valid en passant move
-  }
-
-  return validMoves;
+  importance *= turn === "W" ? 1 : -1;
+  Board[i][j].importance = importance;
 };
 
-// New function for handling promotion logic
-export const checkPawnPromotion = (
-  currentLocation: Position,
-  color: "white" | "black",
-  board: Square[][]
+export const PawnGivesCheck = (
+  i: number,
+  j: number,
+  Board: (Piece | null)[][],
+  turn: string
 ): boolean => {
-  const promotionRow = color === "white" ? board.length - 1 : 0; // Last row for promotion
-  return currentLocation.row === promotionRow; // Returns true if the pawn can promote
-};
+  const boardRows = 6;
+  const boardCols = 5;
 
-export const createPawn = (
-  color: "white" | "black",
-  position: Position
-): Piece => ({
-  type: "pawn",
-  color,
-  materialValue: 1,
-  position,
-  findNextValidPositions: findNextValidPositionsForPawn,
-});
+  // Check if the position is within board boundaries for a 6x5 board
+  if (i < 0 || i >= boardRows || j < 0 || j >= boardCols) return false;
+
+  if (Board[i][j].color === "W") {
+    // White pawn checking for a Black king
+    if (i > 0) {
+      if (j > 0) {
+        const upLeft = Board[i - 1][j - 1];
+        if (upLeft !== null && upLeft.color === "B" && upLeft.type === "King") {
+          if (turn === "W") Board[i][j].importance += 100;
+          return true;
+        }
+      }
+      if (j < boardCols - 1) {
+        const upRight = Board[i - 1][j + 1];
+        if (
+          upRight !== null &&
+          upRight.color === "B" &&
+          upRight.type === "King"
+        ) {
+          if (turn === "W") Board[i][j].importance += 100;
+          return true;
+        }
+      }
+    }
+  }
+
+  if (Board[i][j].color === "B") {
+    // Black pawn checking for a White king
+    if (i < boardRows - 1) {
+      if (j > 0) {
+        const downLeft = Board[i + 1][j - 1];
+        if (
+          downLeft !== null &&
+          downLeft.color === "W" &&
+          downLeft.type === "King"
+        ) {
+          if (turn === "B") Board[i][j].importance += 100;
+          return true;
+        }
+      }
+      if (j < boardCols - 1) {
+        const downRight = Board[i + 1][j + 1];
+        if (
+          downRight !== null &&
+          downRight.color === "W" &&
+          downRight.type === "King"
+        ) {
+          if (turn === "B") Board[i][j].importance += 100;
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+};
