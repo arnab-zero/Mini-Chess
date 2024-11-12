@@ -1,5 +1,4 @@
-import { Piece } from "./Piece";
-import { valueOfPiece, isUnderCheck } from "./pieceLogic";
+import { isUnderCheck, Piece, valueOfPiece } from "../types/pieces";
 
 // These functions are same as the ones in pieceLogic.ts but
 // these don't change the pieces' canMoveTo property
@@ -7,7 +6,7 @@ import { valueOfPiece, isUnderCheck } from "./pieceLogic";
 // Increasing value of this variable makes the AI more aggressive
 const CAPTURE_MULTIPLIER = 0.5;
 
-export const PawnScore = (i: number, j: number, Board: (Piece | any)[][]) => {
+export const PawnScore = (i: number, j: number, Board: (Piece | null)[][]) => {
   const turn = Board[i][j].color;
   let importance: number = 50;
   if (turn === "W" && i !== 0) {
@@ -20,24 +19,6 @@ export const PawnScore = (i: number, j: number, Board: (Piece | any)[][]) => {
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
           importance += valueOfPiece(upLeft.type) * CAPTURE_MULTIPLIER;
       }
-      
-      Removing En Passant for AI for now
-
-        else if (
-          // En Passant
-          i === 3 &&
-          left &&
-          left.numOfMoves === 1 &&
-          left.turnsSinceLastMove === 0
-        ) {
-          let newBoard = Board.map((inner) => inner.slice());
-          newBoard[i - 1][j - 1] = Board[i][j];
-          newBoard[i][j - 1] = null;
-          if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
-            importance += valueOfPiece(left.type);
-          }
-        }
-      
     }
     if (j !== 7) {
       const upRight = Board[i - 1][j + 1];
@@ -49,23 +30,6 @@ export const PawnScore = (i: number, j: number, Board: (Piece | any)[][]) => {
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
           importance += valueOfPiece(upRight.type) * CAPTURE_MULTIPLIER;
       }
-      
-      else if (
-        //  En Passant
-        i === 3 &&
-        right &&
-        right.numOfMoves === 1 &&
-        right.turnsSinceLastMove === 0
-      ) {
-        let newBoard = Board.map((inner) => inner.slice());
-        newBoard[i - 1][j + 1] = Board[i][j];
-        newBoard[i][j + 1] = null;
-        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W")) {
-          canMoveTo[i - 1][j + 1] = true;
-          importance += valueOfPiece(right.type);
-        }
-      }
-      
     }
   }
 
@@ -74,67 +38,35 @@ export const PawnScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       const upLeft = Board[i + 1][j - 1];
       const left = Board[i][j - 1];
       if (upLeft && upLeft.color === "W") {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j - 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
           importance += valueOfPiece(upLeft.type) * CAPTURE_MULTIPLIER;
       }
-
-      else if 
-        i === 4 &&
-        left &&
-        left.numOfMoves === 1 &&
-        left.turnsSinceLastMove === 0
-      ) {
-        let newBoard = Board.map((inner) => inner.slice());
-        newBoard[i + 1][j - 1] = newBoard[i][j];
-        newBoard[i][j - 1] = null;
-        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
-          canMoveTo[i + 1][j - 1] = true;
-        importance += valueOfPiece(left.type);
-      }
     }
     if (j !== 7) {
       const upRight = Board[i + 1][j + 1];
-      const right = Board[i][j + 1];
       if (upRight && upRight.color === "W") {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j + 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
           importance += valueOfPiece(upRight.type) * CAPTURE_MULTIPLIER;
       }
-      
-
-      else if (
-        // En Passant
-        i === 4 &&
-        right &&
-        right.numOfMoves === 1 &&
-        right.turnsSinceLastMove === 0
-      ) {
-        let newBoard = Board.map((inner) => inner.slice());
-        newBoard[i + 1][j + 1] = newBoard[i][j];
-        newBoard[i][j + 1] = null;
-        if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
-          canMoveTo[i + 1][j + 1] = true;
-        importance += valueOfPiece(right.type);
-      }
-      
     }
   }
   importance *= turn === "W" ? 1 : -1;
   Board[i][j].importance = importance;
 };
 
-export const RookScore = (i: number, j: number, Board: (Piece | any)[][]) => {
+export const RookScore = (i: number, j: number, Board: (Piece | null)[][]) => {
   let importance = 150;
   const turn = Board[i][j].color;
   const doesThisHorizontalMoveResultInCheck = (i: number, r: number) => {
     // If the new state of the board after the move happens results in the player being under check,
     // then that move will not be possible.
-    let newBoard = Board.map((inner) => inner.slice());
+    const newBoard = Board.map((inner) => inner.slice());
     newBoard[i][r] = newBoard[i][j];
     newBoard[i][j] = null;
     return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
@@ -142,7 +74,7 @@ export const RookScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   const doesThisVerticalMoveResultInCheck = (r: number, j: number) => {
     // If the new state of the board after the move happens results in the player being under check,
     // then that move will not be possible.
-    let newBoard = Board.map((inner) => inner.slice());
+    const newBoard = Board.map((inner) => inner.slice());
     newBoard[r][j] = newBoard[i][j];
     newBoard[i][j] = null;
     return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
@@ -204,14 +136,14 @@ export const RookScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   Board[i][j].importance = importance;
 };
 
-export const BishopScore = (i: number, j: number, Board: (Piece | any)[][]) => {
+export const BishopScore = (i: number, j: number, Board: (Piece | null)[][]) => {
   let importance: number = 150;
   const turn = Board[i][j].color;
   //bishop can move in 4 directions.
   for (let r = 1; r < 8; r++) {
     // up-right.
     const isUnderCheckIfThisMoveHappens = (r: number) => {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i - r][j + r] = newBoard[i][j];
       newBoard[i][j] = null;
       return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
@@ -232,14 +164,14 @@ export const BishopScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   for (let r = 1; r < 8; r++) {
     // down-right.
     const isUnderCheckIfThisMoveHappens = (r: number) => {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i + r][j + r] = newBoard[i][j];
       newBoard[i][j] = null;
       return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
     };
 
     if (i + r <= 7 && j + r <= 7) {
-      let piece = Board[i + r][j + r];
+      const piece = Board[i + r][j + r];
 
       if (piece) {
         if (piece.color === Board[i][j].color) break;
@@ -253,14 +185,14 @@ export const BishopScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   for (let r = 1; r < 8; r++) {
     // left bottom.
     const isUnderCheckIfThisMoveHappens = (r: number) => {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i + r][j - r] = newBoard[i][j];
       newBoard[i][j] = null;
       return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
     };
 
     if (i + r <= 7 && j - r >= 0) {
-      let piece = Board[i + r][j - r];
+      const piece = Board[i + r][j - r];
 
       if (piece) {
         if (piece.color === Board[i][j].color) break;
@@ -274,10 +206,10 @@ export const BishopScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   for (let r = 1; r < 8; r++) {
     // left top.
     if (i - r >= 0 && j - r >= 0) {
-      let piece = Board[i - r][j - r];
+      const piece = Board[i - r][j - r];
 
       const isUnderCheckIfThisMoveHappens = (r: number) => {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - r][j - r] = newBoard[i][j];
         newBoard[i][j] = null;
         return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
@@ -295,7 +227,7 @@ export const BishopScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   Board[i][j].importance = importance;
 };
 
-export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
+export const KingScore = (i: number, j: number, Board: (Piece | null)[][]) => {
   let importance: number = 10000;
   const turn = Board[i][j].color;
 
@@ -303,7 +235,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     const piece = Board[i - 1][j];
 
     if (!piece || piece.color !== turn) {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i - 1][j] = Board[i][j];
       newBoard[i][j] = null;
       if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -313,7 +245,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       const piece = Board[i - 1][j - 1];
 
       if (!piece || piece.color !== turn) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 1][j - 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -325,7 +257,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       const piece = Board[i - 1][j + 1];
 
       if (!piece || piece.color !== turn) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 1][j + 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -339,7 +271,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     const piece = Board[i + 1][j];
 
     if (!piece || piece.color !== turn) {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i + 1][j] = Board[i][j];
       newBoard[i][j] = null;
       if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -350,7 +282,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       const piece = Board[i + 1][j - 1];
 
       if (!piece || piece.color !== turn) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j - 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -363,7 +295,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       const piece = Board[i + 1][j + 1];
 
       if (!piece || piece.color !== turn) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j + 1] = Board[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -377,7 +309,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     const piece = Board[i][j - 1];
 
     if (!piece || piece.color !== turn) {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i][j - 1] = Board[i][j];
       newBoard[i][j] = null;
       if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -389,7 +321,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     const piece = Board[i][j + 1];
 
     if (!piece || piece.color !== turn) {
-      let newBoard = Board.map((inner) => inner.slice());
+      const newBoard = Board.map((inner) => inner.slice());
       newBoard[i][j + 1] = Board[i][j];
       newBoard[i][j] = null;
       if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -400,7 +332,7 @@ export const KingScore = (i: number, j: number, Board: (Piece | any)[][]) => {
   Board[i][j].importance = importance;
 };
 
-export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
+export const KnightScore = (i: number, j: number, Board: (Piece | null)[][]) => {
   let importance = 200;
   const turn = Board[i][j].color;
   // This covers the 2 cases:
@@ -410,10 +342,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     // i has to be greater than 1 if the knight has to move ahead. because it moves 2 straight
     // and 1 in the other axis.
     if (j >= 1) {
-      let left = Board[i - 2][j - 1];
+      const left = Board[i - 2][j - 1];
 
       if (left && left.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 2][j - 1] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -421,7 +353,7 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       }
     }
     if (j <= 6) {
-      let right = Board[i - 2][j + 1];
+      const right = Board[i - 2][j + 1];
 
       if (right && right.color !== Board[i][j].color) {
         let newBoard = Board.map((inner) => inner.slice());
@@ -439,10 +371,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     // i has to be less than 6 if the knight has to move below. because it moves 2 straight
     // and 1 in the other axis.
     if (j >= 1) {
-      let left = Board[i + 2][j - 1];
+      const left = Board[i + 2][j - 1];
 
       if (left && left.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 2][j - 1] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -450,10 +382,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       }
     }
     if (j <= 6) {
-      let right = Board[i + 2][j + 1];
+      const right = Board[i + 2][j + 1];
 
       if (right && right.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 2][j + 1] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -469,10 +401,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     //i has to be greater than 1 if the knight has to move ahead. because it moves 2 straight
     // and 1 in the other axis.
     if (i >= 1) {
-      let left = Board[i - 1][j - 2];
+      const left = Board[i - 1][j - 2];
 
       if (left && left.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 1][j - 2] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -480,10 +412,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       }
     }
     if (i <= 6) {
-      let right = Board[i + 1][j - 2];
+      const right = Board[i + 1][j - 2];
 
       if (right && right.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j - 2] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -496,10 +428,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
     //i has to be less than 6 if the knight has to move below. because it moves 2 straight
     // and 1 in the other axis.
     if (i >= 1) {
-      let left = Board[i - 1][j + 2];
+      const left = Board[i - 1][j + 2];
 
       if (left && left.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i - 1][j + 2] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
@@ -507,10 +439,10 @@ export const KnightScore = (i: number, j: number, Board: (Piece | any)[][]) => {
       }
     }
     if (i <= 6) {
-      let right = Board[i + 1][j + 2];
+      const right = Board[i + 1][j + 2];
 
       if (right && right.color !== Board[i][j].color) {
-        let newBoard = Board.map((inner) => inner.slice());
+        const newBoard = Board.map((inner) => inner.slice());
         newBoard[i + 1][j + 2] = newBoard[i][j];
         newBoard[i][j] = null;
         if (!isUnderCheck(newBoard, turn === "W" ? "B" : "W"))
