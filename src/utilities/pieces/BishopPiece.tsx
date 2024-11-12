@@ -1,62 +1,150 @@
-import { Bishop, Position } from "../types/pieces";
-import { Square } from "../types/square";
+import { Piece, valueOfPiece } from "../types/pieces";
 
-export const findNextValidPositionsForBishop = (
-  currentLocation: Position,
-  color: "white" | "black",
-  board: Square[][]
-): Position[] => {
-  const validPositions: Position[] = [];
-  const directions = [
-    { row: 1, col: 1 }, // bottom-right
-    { row: 1, col: -1 }, // bottom-left
-    { row: -1, col: 1 }, // top-right
-    { row: -1, col: -1 }, // top-left
-  ];
+export const Bishop = (
+  i: number,
+  j: number,
+  canMoveTo: boolean[][],
+  Board: (Piece | null)[][],
+  turn: string
+) => {
+  let importance: number = 150; // Initial importance for bishop.
+  const maxRow = 6; // Set maximum row boundary for 6x5 board.
+  const maxCol = 5; // Set maximum column boundary for 6x5 board.
 
-  const boardSize = board.length; // Assuming an 8x8 board
+  // Helper function to check if a move puts the current player under check.
+  const isUnderCheckIfThisMoveHappens = (newI: number, newJ: number) => {
+    const newBoard = Board.map(row => row.slice());
+    newBoard[newI][newJ] = newBoard[i][j];
+    newBoard[i][j] = null;
+    return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
+  };
 
-  // Helper function to check if a position is within bounds
-  const isInBounds = (row: number, col: number) =>
-    row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+  // Move in four diagonal directions.
 
-  for (const direction of directions) {
-    let newRow = currentLocation.row + direction.row;
-    let newCol = currentLocation.col + direction.col;
+  // Up-right direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i - r >= 0 && j + r < maxCol) {
+      const piece = Board[i - r][j + r];
+      if (piece && piece.color === Board[i][j].color) break;
+      if (!piece && isUnderCheckIfThisMoveHappens(i - r, j + r)) continue;
 
-    // Move diagonally in the current direction until we hit the board edge or a piece
-    while (isInBounds(newRow, newCol)) {
-      const targetSquare = board[newRow][newCol];
-
-      if (targetSquare.piece) {
-        if (targetSquare.piece.color !== color) {
-          // Capture opponent's piece
-          validPositions.push({ row: newRow, col: newCol });
-        }
-        // Stop further movement in this direction after hitting any piece
+      canMoveTo[i - r][j + r] = true;
+      if (piece && piece.color !== turn) {
+        importance += valueOfPiece(piece.type);
         break;
       }
-
-      // If there is no piece, add the position as valid
-      validPositions.push({ row: newRow, col: newCol });
-
-      // Move one square further in the same direction
-      newRow += direction.row;
-      newCol += direction.col;
-    }
+    } else break;
   }
 
-  return validPositions;
+  // Down-right direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i + r < maxRow && j + r < maxCol) {
+      const piece = Board[i + r][j + r];
+      if (piece && piece.color === Board[i][j].color) break;
+      if (!piece && isUnderCheckIfThisMoveHappens(i + r, j + r)) continue;
+
+      canMoveTo[i + r][j + r] = true;
+      if (piece && piece.color !== turn) {
+        importance += valueOfPiece(piece.type);
+        break;
+      }
+    } else break;
+  }
+
+  // Down-left direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i + r < maxRow && j - r >= 0) {
+      const piece = Board[i + r][j - r];
+      if (piece && piece.color === Board[i][j].color) break;
+      if (!piece && isUnderCheckIfThisMoveHappens(i + r, j - r)) continue;
+
+      canMoveTo[i + r][j - r] = true;
+      if (piece && piece.color !== turn) {
+        importance += valueOfPiece(piece.type);
+        break;
+      }
+    } else break;
+  }
+
+  // Up-left direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i - r >= 0 && j - r >= 0) {
+      const piece = Board[i - r][j - r];
+      if (piece && piece.color === Board[i][j].color) break;
+      if (!piece && isUnderCheckIfThisMoveHappens(i - r, j - r)) continue;
+
+      canMoveTo[i - r][j - r] = true;
+      if (piece && piece.color !== turn) {
+        importance += valueOfPiece(piece.type);
+        break;
+      }
+    } else break;
+  }
+
+  // Adjust importance for minimax scoring
+  importance *= turn === "W" ? 1 : -1;
+  Board[i][j].importance = importance;
 };
 
-// A function to initialize a bishop piece when setting up a board
-export const createBishop = (
-  color: "white" | "black",
-  position: Position
-): Bishop => ({
-  type: "bishop",
-  color,
-  materialValue: 3,
-  findNextValidPositions: findNextValidPositionsForBishop,
-  position,
-});
+export const BishopGivesCheck = (i: number, j: number, Board: (Piece | null)[][]) => {
+  const maxRow = 6; // Set max row for 6x5 board.
+  const maxCol = 5; // Set max col for 6x5 board.
+
+  // Check in all four diagonal directions.
+
+  // Up-right direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i - r >= 0 && j + r < maxCol) {
+      const piece = Board[i - r][j + r];
+      if (
+        piece &&
+        (piece.color === Board[i][j].color ||
+          (piece.color !== Board[i][j].color && piece.type !== "King"))
+      ) break;
+      if (piece && piece.color !== Board[i][j].color && piece.type === "King") return true;
+    } else break;
+  }
+
+  // Down-right direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i + r < maxRow && j + r < maxCol) {
+      const piece = Board[i + r][j + r];
+      if (
+        piece &&
+        (piece.color === Board[i][j].color ||
+          (piece.color !== Board[i][j].color && piece.type !== "King"))
+      ) break;
+      if (piece && piece.color !== Board[i][j].color && piece.type === "King") return true;
+    } else break;
+  }
+
+  // Down-left direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i + r < maxRow && j - r >= 0) {
+      const piece = Board[i + r][j - r];
+      if (
+        piece &&
+        (piece.color === Board[i][j].color ||
+          (piece.color !== Board[i][j].color && piece.type !== "King"))
+      ) break;
+      if (piece && piece.color !== Board[i][j].color && piece.type === "King") return true;
+    } else break;
+  }
+
+  // Up-left direction
+  for (let r = 1; r < maxRow; r++) {
+    if (i - r >= 0 && j - r >= 0) {
+      const piece = Board[i - r][j - r];
+      if (
+        piece &&
+        (piece.color === Board[i][j].color ||
+          (piece.color !== Board[i][j].color && piece.type !== "King"))
+      ) break;
+      if (piece && piece.color !== Board[i][j].color && piece.type === "King") return true;
+    } else break;
+  }
+
+  return false; // No check detected by the bishop in any direction.
+};
+
+

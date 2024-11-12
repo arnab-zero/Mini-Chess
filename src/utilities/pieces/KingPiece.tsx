@@ -1,103 +1,92 @@
-import { King, Position } from "../types/pieces";
-import { Square } from "../types/square";
+import { isUnderCheck, Piece, valueOfPiece } from "../types/pieces";
 
-export const findNextValidPositionsForKing = (
-  currentLocation: Position,
-  color: "white" | "black",
-  board: Square[][]
-): Position[] => {
-  const possibleMoves = [
-    { row: currentLocation.row - 1, col: currentLocation.col }, // Up
-    { row: currentLocation.row + 1, col: currentLocation.col }, // Down
-    { row: currentLocation.row, col: currentLocation.col - 1 }, // Left
-    { row: currentLocation.row, col: currentLocation.col + 1 }, // Right
-    { row: currentLocation.row - 1, col: currentLocation.col - 1 }, // Up Left
-    { row: currentLocation.row - 1, col: currentLocation.col + 1 }, // Up Right
-    { row: currentLocation.row + 1, col: currentLocation.col - 1 }, // Down Left
-    { row: currentLocation.row + 1, col: currentLocation.col + 1 }, // Down Right
+export const King = (
+  i: number,
+  j: number,
+  canMoveTo: boolean[][],
+  Board: (Piece | null)[][],
+  turn: string
+) => {
+  let importance: number = 10000;
+  const maxRow = 6;
+  const maxCol = 5;
+  const opponentColor = turn === "W" ? "B" : "W";
+
+  // Possible moves in all eight directions for the king
+  const directions = [
+    [-1, 0],   // Up
+    [1, 0],    // Down
+    [0, -1],   // Left
+    [0, 1],    // Right
+    [-1, -1],  // Up-left
+    [-1, 1],   // Up-right
+    [1, -1],   // Down-left
+    [1, 1],    // Down-right
   ];
 
-  // Filter valid moves within the bounds of the chessboard (0 to 7)
-  const validMoves = possibleMoves.filter(
-    (move) => move.row >= 0 && move.row < 6 && move.col >= 0 && move.col < 5
-  );
+  for (const [dx, dy] of directions) {
+    const newRow = i + dx;
+    const newCol = j + dy;
 
-  return validMoves;
+    // Ensure within board bounds
+    if (newRow >= 0 && newRow < maxRow && newCol >= 0 && newCol < maxCol) {
+      const piece = Board[newRow][newCol];
+
+      if (!piece || piece.color !== turn) {
+        const newBoard = Board.map((inner) => inner.slice());
+        newBoard[newRow][newCol] = Board[i][j];
+        newBoard[i][j] = null;
+        
+        if (!isUnderCheck(newBoard, opponentColor)) {
+          canMoveTo[newRow][newCol] = true;
+          if (piece) importance += valueOfPiece(piece.type); // Increase importance for capturing valuable pieces
+        }
+      }
+    }
+  }
+
+  // Adjust importance based on turn for use with minimax
+  importance *= turn === "W" ? 1 : -1;
+  Board[i][j].importance = importance;
 };
 
-export const createKing = (
-  color: "white" | "black",
-  position: Position
-): King => ({
-  type: "king",
-  color,
-  materialValue: 1000,
-  findNextValidPositions: findNextValidPositionsForKing,
-  position,
-});
+export const KingGivesCheck = (
+  i: number,
+  j: number,
+  Board: (Piece | any)[][],
+  turn: string
+) => {
+  const maxRow = 6; // 6 rows for 6x5 board
+  const maxCol = 5; // 5 columns for 6x5 board
+  const opponentColor = turn === "W" ? "B" : "W";
 
+  // Possible directions to check for opponent's king
+  const directions = [
+    [-1, 0],   // Up
+    [1, 0],    // Down
+    [0, -1],   // Left
+    [0, 1],    // Right
+    [-1, -1],  // Up-left
+    [-1, 1],   // Up-right
+    [1, -1],   // Down-left
+    [1, 1],    // Down-right
+  ];
 
+  for (const [dx, dy] of directions) {
+    const newRow = i + dx;
+    const newCol = j + dy;
 
-// export const findNextValidPositionsForKing = (
-//   currentLocation: Position,
-//   color: "white" | "black",
-//   board: Square[][],
-//   opponentKingPosition: Position,
-//   isCellUnderAttack: (position: Position, board: Square[][], color: "white" | "black") => boolean
-// ): Position[] => {
-//   const possibleMoves = [
-//     { row: currentLocation.row - 1, col: currentLocation.col }, // Up
-//     { row: currentLocation.row + 1, col: currentLocation.col }, // Down
-//     { row: currentLocation.row, col: currentLocation.col - 1 }, // Left
-//     { row: currentLocation.row, col: currentLocation.col + 1 }, // Right
-//     { row: currentLocation.row - 1, col: currentLocation.col - 1 }, // Up Left
-//     { row: currentLocation.row - 1, col: currentLocation.col + 1 }, // Up Right
-//     { row: currentLocation.row + 1, col: currentLocation.col - 1 }, // Down Left
-//     { row: currentLocation.row + 1, col: currentLocation.col + 1 }  // Down Right
-//   ];
+    // Ensure within board bounds
+    if (newRow >= 0 && newRow < maxRow && newCol >= 0 && newCol < maxCol) {
+      const piece = Board[newRow][newCol];
 
-//   const boardSize = board.length; // Assuming a 6x5 board
-//   const opponentColor = color === "white" ? "black" : "white";
+      // Check if the piece is the opponent's king
+      if (piece && piece.color === opponentColor && piece.type === "King") {
+        return true;
+      }
+    }
+  }
 
-//   // Filter possible moves based on the requirements
-//   const validMoves = possibleMoves.filter((move) => {
-//     // Check if the move is within the board bounds
-//     if (move.row < 0 || move.row >= boardSize || move.col < 0 || move.col >= board[0].length) {
-//       return false;
-//     }
+  return false;
+};
 
-//     // Check if the move is not overlapping with the opponent king's position
-//     if (move.row === opponentKingPosition.row && move.col === opponentKingPosition.col) {
-//       return false;
-//     }
-
-//     // Check if the move would put the king in a position under attack
-//     if (isCellUnderAttack(move, board, opponentColor)) {
-//       return false;
-//     }
-
-//     // Check if the move captures an opponent piece and ensures no check after the move
-//     const targetSquare = board[move.row][move.col];
-//     if (targetSquare.hasPiece && targetSquare.hasPiece.color === opponentColor) {
-//       const originalSquare = board[currentLocation.row][currentLocation.col];
-
-//       // Temporarily perform the move for evaluation
-//       targetSquare.hasPiece = originalSquare.hasPiece;
-//       originalSquare.hasPiece = null;
-
-//       // Check if the king is safe after this move
-//       const kingIsSafe = !isCellUnderAttack(move, board, opponentColor);
-
-//       // Revert the temporary move
-//       originalSquare.hasPiece = targetSquare.hasPiece;
-//       targetSquare.hasPiece = null;
-
-//       return kingIsSafe;
-//     }
-
-//     // If all checks are passed, the move is valid
-//     return true;
-//   });
-
-//   return validMoves;
-// };
