@@ -1,61 +1,169 @@
-import { Position, Rook } from "../types/pieces";
-import { Square } from "../types/square";
+import { isUnderCheck, Piece, valueOfPiece } from "../types/pieces";
 
-export const findNextValidPositionsForRook = (
-  currentLocation: Position,
-  color: "white" | "black",
-  board: Square[][]
-): Position[] => {
-  const validPositions: Position[] = [];
-  const directions = [
-    { row: 1, col: 0 }, // down
-    { row: -1, col: 0 }, // up
-    { row: 0, col: 1 }, // right
-    { row: 0, col: -1 }, // left
-  ];
+export const Rook = (
+  i: number,
+  j: number,
+  canMoveTo: boolean[][],
+  Board: (Piece | null)[][],
+  turn: string
+) => {
+  let importance = 150;
 
-  const boardSize = board.length; // Assuming an 8x8 board
+  const doesThisHorizontalMoveResultInCheck = (i: number, r: number) => {
+    // If the new state of the board after the move happens results in the player being under check,
+    // then that move will not be possible.
+    const newBoard = Board.map((inner) => inner.slice());
+    newBoard[i][r] = newBoard[i][j];
+    newBoard[i][j] = null;
+    return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
+  };
 
-  // Helper function to check if a position is within bounds
-  const isInBounds = (row: number, col: number) =>
-    row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+  const doesThisVerticalMoveResultInCheck = (r: number, j: number) => {
+    // If the new state of the board after the move happens results in the player being under check,
+    // then that move will not be possible.
+    const newBoard = Board.map((inner) => inner.slice());
+    newBoard[r][j] = newBoard[i][j];
+    newBoard[i][j] = null;
+    return isUnderCheck(newBoard, turn === "W" ? "B" : "W");
+  };
 
-  for (const direction of directions) {
-    let newRow = currentLocation.row + direction.row;
-    let newCol = currentLocation.col + direction.col;
+  // Vertical movement check (upward and downward)
+  if (i > 0) {
+    for (let r = i - 1; r >= 0; r--) {
+      const piece = Board[r][j];
+      if (piece) {
+        if (piece.color === turn) break;
+        if (doesThisVerticalMoveResultInCheck(r, j)) break;
+      } else if (doesThisVerticalMoveResultInCheck(r, j)) continue;
 
-    // Move in the current direction until we hit the board edge or a piece
-    while (isInBounds(newRow, newCol)) {
-      const targetSquare = board[newRow][newCol];
-
-      if (targetSquare.piece) {
-        if (targetSquare.piece.color !== color) {
-          // Capture opponent's piece
-          validPositions.push({ row: newRow, col: newCol });
+      if (piece === null) canMoveTo[r][j] = true;
+      else {
+        if (piece.color !== turn) {
+          canMoveTo[r][j] = true;
+          importance += valueOfPiece(piece.type);
         }
-        // Stop further movement in this direction after hitting any piece
         break;
       }
-
-      // If there is no piece, add the position as valid
-      validPositions.push({ row: newRow, col: newCol });
-
-      // Move one square further in the same direction
-      newRow += direction.row;
-      newCol += direction.col;
     }
   }
 
-  return validPositions;
+  if (i < 5) {
+    for (let r = i + 1; r <= 5; r++) {
+      const piece = Board[r][j];
+      if (piece) {
+        if (piece.color === turn) break;
+        if (doesThisVerticalMoveResultInCheck(r, j)) break;
+      } else if (doesThisVerticalMoveResultInCheck(r, j)) continue;
+
+      if (piece === null) canMoveTo[r][j] = true;
+      else {
+        if (piece.color !== turn) {
+          canMoveTo[r][j] = true;
+          importance += valueOfPiece(piece.type);
+        }
+        break;
+      }
+    }
+  }
+
+  // Horizontal movement check (left and right)
+  if (j > 0) {
+    for (let r = j - 1; r >= 0; r--) {
+      const piece = Board[i][r];
+      if (piece) {
+        if (piece.color === turn) break;
+        if (doesThisHorizontalMoveResultInCheck(i, r)) break;
+      } else if (doesThisHorizontalMoveResultInCheck(i, r)) continue;
+
+      if (piece === null) canMoveTo[i][r] = true;
+      else {
+        if (piece.color !== turn) {
+          canMoveTo[i][r] = true;
+          importance += valueOfPiece(piece.type);
+        }
+        break;
+      }
+    }
+  }
+
+  if (j < 4) {
+    for (let r = j + 1; r <= 4; r++) {
+      const piece = Board[i][r];
+      if (piece) {
+        if (piece.color === turn) break;
+        if (doesThisHorizontalMoveResultInCheck(i, r)) break;
+      } else if (doesThisHorizontalMoveResultInCheck(i, r)) continue;
+
+      if (piece === null) canMoveTo[i][r] = true;
+      else {
+        if (piece.color !== turn) {
+          canMoveTo[i][r] = true;
+          importance += valueOfPiece(piece.type);
+        }
+        break;
+      }
+    }
+  }
+
+  // Adjust the importance based on the color of the turn
+  importance *= turn === "W" ? 1 : -1;
+
+  // Save the importance of the Rook piece at the current position
+  Board[i][j].importance = importance;
 };
 
-export const createRook = (
-  color: "white" | "black",
-  position: Position
-): Rook => ({
-  type: "rook",
-  color,
-  materialValue: 5,
-  position,
-  findNextValidPositions: findNextValidPositionsForRook,
-});
+export const RookGivesCheck = (i: number, j: number, Board: (Piece | null)[][]) => {
+  if (i !== 0) {
+    for (let r = i - 1; r >= 0; r--) {
+      const unit = Board[r][j];
+      if (
+        unit &&
+        (unit.color === Board[i][j].color ||
+          (unit.color !== Board[i][j].color && unit.type !== "King"))
+      )
+        break;
+      if (unit && unit.color !== Board[i][j].color && unit.type === "King")
+        return true;
+    }
+  }
+  if (i !== 7) {
+    for (let r = i + 1; r <= 7; r++) {
+      const unit = Board[r][j];
+      if (
+        unit &&
+        (unit.color === Board[i][j].color ||
+          (unit.color !== Board[i][j].color && unit.type !== "King"))
+      )
+        break;
+      if (unit && unit.color !== Board[i][j].color && unit.type === "King")
+        return true;
+    }
+  }
+  if (j !== 0) {
+    for (let r = j - 1; r >= 0; r--) {
+      const unit = Board[i][r];
+      if (
+        unit &&
+        (unit.color === Board[i][j].color ||
+          (unit.color !== Board[i][j].color && unit.type !== "King"))
+      )
+        break;
+      if (unit && unit.color !== Board[i][j].color && unit.type === "King")
+        return true;
+    }
+  }
+  if (j !== 7) {
+    for (let r = j + 1; r <= 7; r++) {
+      const unit = Board[i][r];
+      if (
+        unit &&
+        (unit.color === Board[i][j].color ||
+          (unit.color !== Board[i][j].color && unit.type !== "King"))
+      )
+        break;
+      if (unit && unit.color !== Board[i][j].color && unit.type === "King")
+        return true;
+    }
+  }
+  return false;
+};
