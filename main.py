@@ -137,7 +137,7 @@ def main():
 def load_images():
     pieces = ["bR", "bN", "bB", "bQ", "bK", "bp", "wR", "wN", "wB", "wQ", "wK", "wp"]
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load(f"../images/{piece}.png"), (SQ_SIZE, SQ_SIZE))
+        IMAGES[piece] = p.transform.scale(p.image.load(f"./images/{piece}.png"), (SQ_SIZE, SQ_SIZE))
 
 
 def draw_game_state(screen, gs, validMoves, sqSelected, message, selected_piece=None, selected_piece_moves=[]):
