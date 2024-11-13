@@ -1,4 +1,9 @@
+import random
+
 piece_score = {"K": 100, "Q": 9, "R": 5, "B": 3, "N": 3, "p": 1}
+CHECKMATE = 10000
+STALEMATE = 0
+DEPTH = 3
 
 knight_scores = [[0.0, 0.1, 0.2, 0.2, 0.2],
                  [0.1, 0.3, 0.5, 0.5, 0.5],
