@@ -40,6 +40,7 @@ pawn_scores = [[0.8, 0.8, 0.8, 0.8, 0.8],
                [0.2, 0.2, 0.2, 0.4, 0.4],
                [0.25, 0.15, 0.1, 0.2, 0.2]]
 
+
 piece_position_scores = {"wN": knight_scores,
                          "bN": knight_scores[::-1],
                          "wB": bishop_scores,
@@ -51,12 +52,30 @@ piece_position_scores = {"wN": knight_scores,
                          "wp": pawn_scores,
                          "bp": pawn_scores[::-1]}
 
-def findBestMove(gs, validMoves):
-    global nextMove
-    nextMove = None
-    random.shuffle(validMoves)
-    findMoveMiniMaxPruning(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    return nextMove
+
+def scoreBoard(gs):
+    if gs.checkMate:
+        if gs.whiteToMove:
+            return -CHECKMATE
+        else:
+            return CHECKMATE
+
+    elif gs.staleMate:
+        return STALEMATE
+
+    score = 0
+    for row in range(6):
+        for col in range(5):
+            piece = gs.board[row, col]
+            if piece != "--":
+                piece_position_score = 0
+                if piece[1] != "K":
+                    piece_position_score = piece_position_scores[piece][row][col]
+                if piece[0] == "w":
+                    score += piece_score[piece[1]] + piece_position_score
+                if piece[0] == "b":
+                    score -= piece_score[piece[1]] + piece_position_score
+    return score
 
 
 def findMoveMiniMaxPruning(gs, validMoves, depth, alpha, beta, turnMultiplier):
@@ -97,6 +116,14 @@ def findMoveMiniMaxPruning(gs, validMoves, depth, alpha, beta, turnMultiplier):
             break
 
     return maxScore
+
+
+def findBestMove(gs, validMoves):
+    global nextMove
+    nextMove = None
+    random.shuffle(validMoves)
+    findMoveMiniMaxPruning(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    return nextMove
 
 
 def capture_heuristic(gs, move):
